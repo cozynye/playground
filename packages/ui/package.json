@@ -1,0 +1,42 @@
+{
+  "name": "@cozy/ui",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./button": {
+      "types": "./src/button.tsx",
+      "import": "./src/button.tsx"
+    },
+    "./card": {
+      "types": "./src/card.tsx",
+      "import": "./src/card.tsx"
+    },
+    "./layout": {
+      "types": "./src/layout.tsx",
+      "import": "./src/layout.tsx"
+    }
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cozy/config-eslint": "workspace:*",
+    "@cozy/config-typescript": "workspace:*",
+    "@types/react": "^19.0.2",
+    "eslint": "^9.17.0",
+    "react": "^19.0.0",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  }
+}

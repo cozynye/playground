@@ -6,9 +6,7 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean && rm -rf node_modules",
-    "dev:main": "turbo dev --filter=main",
-    "dev:worldcup": "turbo dev --filter=worldcup"
+    "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

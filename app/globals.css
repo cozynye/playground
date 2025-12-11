@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* 월드컵 게임 버튼의 포커스 스타일 완전 제거 */
+button:focus,
+button:focus-visible,
+button:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: rgb(229 231 235) !important; /* gray-200 */
+}
+
+button:hover {
+  border-color: #6366f1 !important; /* cozy-primary */
+}
+
+button:not(:hover):focus {
+  border-color: rgb(229 231 235) !important; /* gray-200 */
+}

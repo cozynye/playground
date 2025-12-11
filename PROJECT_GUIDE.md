@@ -21,9 +21,11 @@
 ## 1. 이 프로젝트가 뭔가요?
 
 ### 한 줄 요약
+
 **하나의 도메인에서 여러 개의 서비스를 경로(/)로 구분**해서 운영하기 위한 프로젝트입니다.
 
 ### 예시
+
 ```
 playground.vercel.app/           → 메인 랜딩 페이지
 playground.vercel.app/worldcup   → 이상형 월드컵 서비스
@@ -32,9 +34,10 @@ playground.vercel.app/manage     → 관리자 페이지 (나중에 추가)
 ```
 
 ### 핵심 개념
-- **하나의 앱(main)** 안에 여러 서비스가 **폴더(라우트)**로 구분됩니다
+
+- **하나의 앱(main)** 안에 여러 서비스가 **폴더(라우트)** 로 구분됩니다
 - 모든 서비스는 **같은 기술 스택**을 공유합니다
-- **공유 컴포넌트(@cozy/ui)**를 사용해 일관된 디자인을 유지합니다
+- **공유 컴포넌트(@cozy/ui)** 를 사용해 일관된 디자인을 유지합니다
 
 ---
 
@@ -56,12 +59,12 @@ apps/main/
 
 ### 장점
 
-| 장점 | 설명 |
-|------|------|
-| 간단한 배포 | Vercel에 하나의 앱만 배포하면 끝 |
-| 코드 공유 | 버튼, 카드 같은 UI를 한 번만 만들고 모든 페이지에서 사용 |
-| 일관성 | ESLint, TypeScript 설정을 한 곳에서 관리 |
-| 빌드 최적화 | Turborepo가 변경된 부분만 다시 빌드 (시간 절약) |
+| 장점        | 설명                                                     |
+| ----------- | -------------------------------------------------------- |
+| 간단한 배포 | Vercel에 하나의 앱만 배포하면 끝                         |
+| 코드 공유   | 버튼, 카드 같은 UI를 한 번만 만들고 모든 페이지에서 사용 |
+| 일관성      | ESLint, TypeScript 설정을 한 곳에서 관리                 |
+| 빌드 최적화 | Turborepo가 변경된 부분만 다시 빌드 (시간 절약)          |
 
 ---
 
@@ -83,11 +86,11 @@ pnpm install
 
 #### npm vs pnpm 차이
 
-| 비교 | npm | pnpm |
-|------|-----|------|
-| 속도 | 느림 | 빠름 (2~3배) |
-| 디스크 | 프로젝트마다 중복 저장 | 공유해서 저장 |
-| Monorepo 지원 | 약함 | 강력함 |
+| 비교          | npm                    | pnpm          |
+| ------------- | ---------------------- | ------------- |
+| 속도          | 느림                   | 빠름 (2~3배)  |
+| 디스크        | 프로젝트마다 중복 저장 | 공유해서 저장 |
+| Monorepo 지원 | 약함                   | 강력함        |
 
 ---
 
@@ -96,6 +99,7 @@ pnpm install
 **Turborepo = Monorepo를 효율적으로 관리해주는 도구**
 
 #### 캐싱이란?
+
 한번 빌드한 결과를 저장해둡니다.
 코드가 안 바뀌면 다시 빌드 안 하고 저장된 결과를 씁니다.
 → **빌드 시간 90% 이상 단축** 가능
@@ -107,6 +111,7 @@ pnpm install
 **Next.js = React로 웹사이트 만드는 프레임워크**
 
 #### 파일 기반 라우팅
+
 ```
 app/
 ├── page.tsx           → /
@@ -175,6 +180,7 @@ packages/ui/
 **왜 공유하나요?**
 
 버튼을 예로 들면:
+
 - `/` 메인 페이지에서도 버튼이 필요
 - `/worldcup` 페이지에서도 버튼이 필요
 - `/weather` 페이지에서도 버튼이 필요
@@ -183,7 +189,7 @@ packages/ui/
 
 ```tsx
 // apps/main/app/worldcup/page.tsx
-import { Button } from '@cozy/ui/button';
+import { Button } from "@cozy/ui/button";
 
 export default function WorldcupPage() {
   return <Button>시작하기</Button>;
@@ -225,7 +231,7 @@ main:dev: - Local: http://localhost:3000
 ### 이게 뭔가요?
 
 ```tsx
-import { Button } from '@cozy/ui/button';
+import { Button } from "@cozy/ui/button";
 ```
 
 `@cozy/ui`는 **패키지 이름**입니다.
@@ -242,12 +248,12 @@ ui          → 누군가 이미 만들어놨을 수 있음
 
 ### 정리
 
-| 패키지 이름 | 실제 위치 | 설명 |
-|------------|----------|------|
-| `@cozy/ui` | `packages/ui/` | 공유 UI 컴포넌트 |
-| `@cozy/config-eslint` | `packages/config-eslint/` | ESLint 설정 |
-| `@cozy/config-typescript` | `packages/config-typescript/` | TypeScript 설정 |
-| `@cozy/config-tailwind` | `packages/config-tailwind/` | Tailwind 설정 |
+| 패키지 이름               | 실제 위치                     | 설명             |
+| ------------------------- | ----------------------------- | ---------------- |
+| `@cozy/ui`                | `packages/ui/`                | 공유 UI 컴포넌트 |
+| `@cozy/config-eslint`     | `packages/config-eslint/`     | ESLint 설정      |
+| `@cozy/config-typescript` | `packages/config-typescript/` | TypeScript 설정  |
+| `@cozy/config-tailwind`   | `packages/config-tailwind/`   | Tailwind 설정    |
 
 ---
 
@@ -293,21 +299,21 @@ pnpm dev
 
 ### 기본 명령어
 
-| 명령어 | 설명 |
-|--------|------|
-| `pnpm install` | 모든 패키지 설치 |
-| `pnpm dev` | 개발 서버 실행 |
-| `pnpm build` | 프로덕션 빌드 |
-| `pnpm lint` | 코드 스타일 검사 |
-| `pnpm typecheck` | 타입 검사 |
+| 명령어           | 설명             |
+| ---------------- | ---------------- |
+| `pnpm install`   | 모든 패키지 설치 |
+| `pnpm dev`       | 개발 서버 실행   |
+| `pnpm build`     | 프로덕션 빌드    |
+| `pnpm lint`      | 코드 스타일 검사 |
+| `pnpm typecheck` | 타입 검사        |
 
 ### pnpm이 설치 안 됐을 때
 
-| 명령어 | 설명 |
-|--------|------|
-| `npx pnpm install` | 패키지 설치 |
-| `npx pnpm dev` | 개발 서버 실행 |
-| `npx pnpm build` | 빌드 |
+| 명령어             | 설명           |
+| ------------------ | -------------- |
+| `npx pnpm install` | 패키지 설치    |
+| `npx pnpm dev`     | 개발 서버 실행 |
+| `npx pnpm build`   | 빌드           |
 
 ### 특정 앱에 패키지 추가
 

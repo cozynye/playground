@@ -494,6 +494,205 @@ function loginUser(username: string, password: string): boolean {
 
 ---
 
+## 모바일 우선 반응형 디자인 (Mobile-First Responsive)
+
+### 핵심 원칙
+
+**모든 UI 컴포넌트는 반드시 모바일 환경을 고려하여 작성해야 한다.**
+
+### 반응형 브레이크포인트
+
+```typescript
+// Tailwind CSS 기본 브레이크포인트 사용
+// sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px
+
+// Mobile First 접근법 - 모바일 스타일을 기본으로, 큰 화면에서 확장
+className="text-sm md:text-base lg:text-lg"
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+className="p-4 md:p-6 lg:p-8"
+```
+
+### 반응형 체크리스트
+
+모든 UI 작업 시 다음을 확인해야 한다:
+
+- [ ] **모바일 (< 640px)**: 터치 친화적, 세로 스크롤, 큰 터치 타겟
+- [ ] **태블릿 (640px - 1024px)**: 중간 레이아웃, 적절한 여백
+- [ ] **데스크탑 (> 1024px)**: 넓은 레이아웃, 호버 효과 활용
+
+### 필수 적용 사항
+
+#### 1. 터치 타겟 크기
+```tsx
+// ❌ BAD - 터치하기 어려움
+<button className="p-1 text-xs">클릭</button>
+
+// ✅ GOOD - 최소 44x44px 터치 영역
+<button className="p-3 min-h-[44px] min-w-[44px]">클릭</button>
+```
+
+#### 2. 유연한 레이아웃
+```tsx
+// ❌ BAD - 고정 너비
+<div className="w-[800px]">콘텐츠</div>
+
+// ✅ GOOD - 반응형 너비
+<div className="w-full max-w-4xl mx-auto px-4">콘텐츠</div>
+```
+
+#### 3. 반응형 그리드
+```tsx
+// ❌ BAD - 고정 그리드
+<div className="grid grid-cols-4 gap-8">
+
+// ✅ GOOD - 반응형 그리드
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+```
+
+#### 4. 반응형 텍스트
+```tsx
+// ❌ BAD - 고정 크기
+<h1 className="text-4xl">제목</h1>
+
+// ✅ GOOD - 반응형 크기
+<h1 className="text-2xl md:text-3xl lg:text-4xl">제목</h1>
+```
+
+#### 5. 이미지 반응형
+```tsx
+// ❌ BAD - 고정 크기 이미지
+<img src="..." width={800} height={600} />
+
+// ✅ GOOD - 반응형 이미지
+<img src="..." className="w-full h-auto object-cover" />
+```
+
+### 3D/Canvas 반응형 (Three.js / React Three Fiber)
+
+```tsx
+// viewport 기반 반응형 적용
+const { viewport } = useThree();
+
+useEffect(() => {
+  const isMobile = viewport.width < 8;
+  const isTablet = viewport.width >= 8 && viewport.width < 12;
+
+  // 화면 크기에 따른 위치/크기 조정
+  if (isMobile) {
+    setScale(0.6);
+    setCameraDistance(16);
+  } else if (isTablet) {
+    setScale(0.8);
+    setCameraDistance(14);
+  } else {
+    setScale(1);
+    setCameraDistance(12);
+  }
+}, [viewport.width]);
+```
+
+### 모바일 인터랙션 지원
+
+```tsx
+// 터치 이벤트 지원
+useEffect(() => {
+  const handleTouchMove = (e: TouchEvent) => {
+    const touch = e.touches[0];
+    // 터치 좌표 처리
+  };
+
+  window.addEventListener('touchmove', handleTouchMove, { passive: true });
+  return () => window.removeEventListener('touchmove', handleTouchMove);
+}, []);
+```
+
+---
+
+## Meta OG (Open Graph) 필수 규칙
+
+**모든 페이지를 만들 때 반드시 Meta OG 정보를 포함해야 합니다.**
+
+### 필수 메타 태그
+
+Next.js App Router에서는 `metadata` 객체 또는 `generateMetadata` 함수를 사용합니다.
+
+```typescript
+// app/page.tsx 또는 app/[slug]/page.tsx
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '페이지 제목 | Cozy',
+  description: '페이지에 대한 설명 (150자 이내 권장)',
+  keywords: ['키워드1', '키워드2', '키워드3'],
+  openGraph: {
+    title: '페이지 제목 | Cozy',
+    description: '페이지에 대한 설명',
+    url: 'https://cozy.example.com/page-path',
+    siteName: 'Cozy',
+    images: [
+      {
+        url: '/og-image.png', // 1200x630px 권장
+        width: 1200,
+        height: 630,
+        alt: '이미지 설명',
+      },
+    ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '페이지 제목 | Cozy',
+    description: '페이지에 대한 설명',
+    images: ['/og-image.png'],
+  },
+};
+```
+
+### 동적 메타데이터 (Dynamic Routes)
+
+```typescript
+// app/[slug]/page.tsx
+import { Metadata } from 'next';
+
+interface PageProps {
+  params: { slug: string };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const data = await fetchData(params.slug);
+
+  return {
+    title: `${data.title} | Cozy`,
+    description: data.description,
+    openGraph: {
+      title: `${data.title} | Cozy`,
+      description: data.description,
+      images: [data.ogImage || '/og-default.png'],
+    },
+  };
+}
+```
+
+### 체크리스트
+
+페이지 작성 시 반드시 확인:
+- [ ] `title` - 페이지 제목 (60자 이내 권장)
+- [ ] `description` - 페이지 설명 (150자 이내 권장)
+- [ ] `openGraph.title` - OG 제목
+- [ ] `openGraph.description` - OG 설명
+- [ ] `openGraph.image` - OG 이미지 (1200x630px)
+- [ ] `twitter.card` - Twitter 카드 타입
+
+### OG 이미지 가이드라인
+
+- **크기**: 1200 x 630px (권장)
+- **형식**: PNG 또는 JPG
+- **위치**: `public/` 폴더
+- **파일명**: 페이지별 구분 (예: `og-home.png`, `og-worldcup.png`)
+
+---
+
 ## 새 서비스 추가 방법
 
 1. `apps/worldcup/` 복사

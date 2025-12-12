@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui';
 import type { IWorldcupConfig } from '../types';
 import { useWorldcupGame } from '../hooks';
 import { ShareButtons } from './ShareButtons';
+import { RunningCharacter } from './RunningCharacter';
 
 interface WorldcupGameProps {
   config: IWorldcupConfig;
@@ -23,6 +24,10 @@ export function WorldcupGame({ config, currentUrl, autoStart = false }: Worldcup
 
   const { phase, roundInfo, currentMatch, finalWinner } = gameState;
 
+  // 선택 애니메이션 상태
+  const [selectedSide, setSelectedSide] = useState<'left' | 'right' | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
   // URL에서 autostart 파라미터 제거
   useEffect(() => {
     if (autoStart) {
@@ -35,20 +40,31 @@ export function WorldcupGame({ config, currentUrl, autoStart = false }: Worldcup
 
   const handleSelect = useCallback(
     (position: 'left' | 'right') => {
+      if (isAnimating) return;
+
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
 
-      // 결승에서 선택 시 바로 결과 페이지로 이동
-      if (isFinal && currentMatch) {
-        const selectedItem = position === 'left' ? currentMatch.left : currentMatch.right;
-        router.push(`${pathname}/result?winner=${selectedItem.id}`);
-        return;
-      }
+      // 애니메이션 시작
+      setSelectedSide(position);
+      setIsAnimating(true);
 
-      selectItem(position);
+      // 애니메이션 후 실제 선택 수행
+      setTimeout(() => {
+        // 결승에서 선택 시 바로 결과 페이지로 이동
+        if (isFinal && currentMatch) {
+          const selectedItem = position === 'left' ? currentMatch.left : currentMatch.right;
+          router.push(`${pathname}/result?winner=${selectedItem.id}`);
+          return;
+        }
+
+        selectItem(position);
+        setSelectedSide(null);
+        setIsAnimating(false);
+      }, 400); // 애니메이션 시간
     },
-    [isFinal, currentMatch, router, pathname, selectItem]
+    [isAnimating, isFinal, currentMatch, router, pathname, selectItem]
   );
 
   const handleSelectLeft = useCallback(() => {
@@ -99,15 +115,18 @@ export function WorldcupGame({ config, currentUrl, autoStart = false }: Worldcup
 
       {phase === 'playing' && currentMatch && roundInfo && (
         <div className="mt-6">
-          <div className="mb-6 text-center">
+          <div className="mb-8 text-center">
             <p className="text-lg font-semibold text-cozy-primary">
               {roundName} ({roundInfo.matchIndex + 1}/{roundInfo.totalMatches})
             </p>
-            <div className="mx-auto mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-gray-200">
+            <div className="relative mx-auto mt-4 h-3 w-full max-w-md overflow-visible rounded-full bg-gray-200">
+              <RunningCharacter progress={progress} />
               <div
-                className="h-full bg-cozy-primary transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-cozy-primary to-purple-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
+              {/* 골인 지점 */}
+              <div className="absolute -right-1 -top-5 text-xl">🏁</div>
             </div>
           </div>
 
@@ -116,7 +135,14 @@ export function WorldcupGame({ config, currentUrl, autoStart = false }: Worldcup
               key={currentMatch.left.id}
               tabIndex={-1}
               onClick={handleSelectLeft}
-              className="group flex-1 overflow-hidden rounded-xl border-2 border-gray-200 bg-white transition-all hover:border-cozy-primary hover:shadow-lg active:scale-[0.98]"
+              disabled={isAnimating}
+              className={`group flex-1 overflow-hidden rounded-xl border-2 bg-white transition-all duration-300 ease-out
+                ${selectedSide === 'left'
+                  ? 'scale-105 border-cozy-primary shadow-xl ring-4 ring-cozy-primary/30'
+                  : selectedSide === 'right'
+                    ? 'scale-75 opacity-0 border-gray-200'
+                    : 'border-gray-200 hover:border-cozy-primary hover:shadow-lg active:scale-[0.98]'
+                }`}
             >
               <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                 <Image
@@ -147,7 +173,14 @@ export function WorldcupGame({ config, currentUrl, autoStart = false }: Worldcup
               key={currentMatch.right.id}
               tabIndex={-1}
               onClick={handleSelectRight}
-              className="group flex-1 overflow-hidden rounded-xl border-2 border-gray-200 bg-white transition-all hover:border-cozy-primary hover:shadow-lg active:scale-[0.98]"
+              disabled={isAnimating}
+              className={`group flex-1 overflow-hidden rounded-xl border-2 bg-white transition-all duration-300 ease-out
+                ${selectedSide === 'right'
+                  ? 'scale-105 border-cozy-primary shadow-xl ring-4 ring-cozy-primary/30'
+                  : selectedSide === 'left'
+                    ? 'scale-75 opacity-0 border-gray-200'
+                    : 'border-gray-200 hover:border-cozy-primary hover:shadow-lg active:scale-[0.98]'
+                }`}
             >
               <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                 <Image

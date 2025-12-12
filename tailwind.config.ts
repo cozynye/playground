@@ -7,9 +7,9 @@ const config: Config = {
   ],
   theme: {
     screens: {
-      // 모바일 기준: 800px
-      sm: '800px',
-      md: '800px',
+      // 모바일 퍼스트: sm=400px (초소형 모바일 ~ 일반 모바일)
+      sm: '400px',
+      md: '768px',
       lg: '1024px',
       xl: '1280px',
       '2xl': '1536px',
@@ -27,6 +27,26 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
+      },
+      animation: {
+        'spin-slow': 'spin 20s linear infinite',
+        'float-cloud': 'floatCloud 25s linear infinite',
+        'rain': 'rain 1s linear infinite',
+        'snow': 'snow 5s linear infinite',
+      },
+      keyframes: {
+        floatCloud: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100vw)' },
+        },
+        rain: {
+          '0%': { transform: 'translateY(-20px)', opacity: '1' },
+          '100%': { transform: 'translateY(100vh)', opacity: '0.3' },
+        },
+        snow: {
+          '0%': { transform: 'translateY(-20px) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(100vh) rotate(360deg)', opacity: '0.3' },
+        },
       },
     },
   },

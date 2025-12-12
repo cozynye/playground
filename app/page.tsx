@@ -27,12 +27,9 @@ export default function HomePage() {
   }, [router]);
 
   const handleServiceClick = useCallback((href: string) => {
-    console.log('🎯 Service clicked:', href);
     if (href === '#') return;
-    // window.location으로 직접 이동
-    console.log('🚀 Navigating to:', href);
-    window.location.href = href;
-  }, []);
+    router.push(href);
+  }, [router]);
 
   useEffect(() => {
     // Hide hint after 5 seconds

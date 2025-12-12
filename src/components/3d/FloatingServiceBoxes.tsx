@@ -181,15 +181,10 @@ function ServiceBoxComponent({ service, position, scale, onServiceClick, isMobil
     // 이벤트 전파 중단
     event.stopPropagation();
 
-    alert(`클릭됨! ${service.title}`);
-    console.log('📦 Box clicked:', service.title, service.href);
     if (service.href !== '#') {
-      console.log('✅ Calling onServiceClick:', service.href);
       onServiceClick(service.href);
-    } else {
-      console.log('⏭️ Skipping navigation (href is #)');
     }
-  }, [service.href, service.title, onServiceClick]);
+  }, [service.href, onServiceClick]);
 
   // Scaled dimensions - 박스 크기 제한 (최대 300px 정도) - 메모이제이션
   const { boxWidth, boxHeight, boxDepth } = useMemo(() => {

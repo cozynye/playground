@@ -1,3 +1,16 @@
 export { foodItems } from './foodItems';
 export { colorItems } from './colorItems';
 export { animalItems } from './animalItems';
+export { convenienceStoreItems } from './convenienceStoreItems';
+export { mbtiItems } from './mbtiItems';
+export { dogBreedItems } from './dogBreedItems';
+export { dessertItems } from './dessertItems';
+export { lateNightSnackItems } from './lateNightSnackItems';
+export { bubbleTeaItems } from './bubbleTeaItems';
+export { travelDestinationItems } from './travelDestinationItems';
+export { lolChampionItems } from './lolChampionItems';
+export { kpopIdolItems } from './kpopIdolItems';
+export { animeCharacterItems } from './animeCharacterItems';
+export { webtoonCharacterItems } from './webtoonCharacterItems';
+export { fashionStyleItems } from './fashionStyleItems';
+export { phoneWallpaperItems } from './phoneWallpaperItems';

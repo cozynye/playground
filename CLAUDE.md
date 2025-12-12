@@ -24,6 +24,19 @@ pnpm dev:main         # main 앱만 실행 (port 3000)
 pnpm dev:worldcup     # worldcup 앱만 실행 (port 3001)
 ```
 
+### ⚠️ Claude Code 실행 시 포트 번호
+
+**중요**: Claude Code에서 개발 서버를 실행할 때는 **포트 3005번부터** 사용해야 합니다.
+
+```bash
+# Claude Code에서 실행 시
+npx next dev --port 3005   # 또는 필요한 포트 번호 (3005, 3006, 3007, ...)
+```
+
+**이유**:
+- 사용자의 로컬 개발 환경과 충돌 방지
+- 포트 3000-3004는 다른 서비스에서 사용 중일 수 있음
+
 ### 패키지 추가
 
 ```bash

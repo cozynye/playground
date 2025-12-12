@@ -12,12 +12,13 @@ import {
 } from '@/features/weather/components';
 import type { WeatherData, HourlyForecast } from '@/features/weather/types';
 
-type LocationPermission = 'pending' | 'granted' | 'denied' | 'unavailable';
+type LocationPermission = 'pending' | 'granted' | 'denied' | 'unavailable' | 'timeout';
 
 export default function WeatherPage() {
   // 위치 권한 상태
   const [locationPermission, setLocationPermission] = useState<LocationPermission>('pending');
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationError, setLocationError] = useState<string>('');
 
   // 내 위치 날씨
   const [myWeather, setMyWeather] = useState<WeatherData | null>(null);
@@ -28,8 +29,8 @@ export default function WeatherPage() {
   const [hourlyForecasts, setHourlyForecasts] = useState<HourlyForecast[]>([]);
   const [hourlyLoading, setHourlyLoading] = useState(false);
 
-  // 선택된 도시 날씨
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  // 선택된 도시 날씨 (기본값: 서울)
+  const [selectedCity, setSelectedCity] = useState<string | null>('서울');
   const [cityWeather, setCityWeather] = useState<WeatherData | null>(null);
   const [cityLoading, setCityLoading] = useState(false);
 
@@ -37,10 +38,66 @@ export default function WeatherPage() {
   const [cityHourlyForecasts, setCityHourlyForecasts] = useState<HourlyForecast[]>([]);
   const [cityHourlyLoading, setCityHourlyLoading] = useState(false);
 
+  // 페이지 로드 시 서울 날씨 먼저 가져오기 (위치 권한 대기 중에도 표시)
+  useEffect(() => {
+    const fetchSeoulWeather = async () => {
+      setCityLoading(true);
+      setCityHourlyLoading(true);
+
+      try {
+        const [weatherRes, hourlyRes] = await Promise.all([
+          fetch('/api/weather?city=서울'),
+          fetch('/api/weather/hourly?city=서울'),
+        ]);
+
+        const weatherData = await weatherRes.json();
+        const hourlyData = await hourlyRes.json();
+
+        if (weatherRes.ok) {
+          setCityWeather(weatherData);
+        }
+        if (hourlyRes.ok && hourlyData.forecasts) {
+          setCityHourlyForecasts(hourlyData.forecasts);
+        }
+      } catch (err) {
+        console.error('Seoul weather error:', err);
+      } finally {
+        setCityLoading(false);
+        setCityHourlyLoading(false);
+      }
+    };
+
+    fetchSeoulWeather();
+  }, []);
+
+  // 위치 에러 처리 함수
+  const handleGeolocationError = useCallback((error: GeolocationPositionError) => {
+    console.error('Geolocation error:', error);
+
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        setLocationPermission('denied');
+        setLocationError('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+        break;
+      case error.POSITION_UNAVAILABLE:
+        setLocationPermission('unavailable');
+        setLocationError('위치 정보를 가져올 수 없습니다. GPS 신호를 확인해주세요.');
+        break;
+      case error.TIMEOUT:
+        setLocationPermission('timeout');
+        setLocationError('위치 정보를 가져오는데 시간이 초과되었습니다. 다시 시도해주세요.');
+        break;
+      default:
+        setLocationPermission('unavailable');
+        setLocationError('위치 정보를 가져올 수 없습니다.');
+    }
+  }, []);
+
   // 페이지 진입 시 자동으로 위치 권한 요청
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocationPermission('unavailable');
+      setLocationError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
       return;
     }
 
@@ -48,26 +105,20 @@ export default function WeatherPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocationPermission('granted');
+        setLocationError('');
         setCoords({
           lat: position.coords.latitude,
           lon: position.coords.longitude,
         });
       },
-      (error) => {
-        console.error('Geolocation error:', error);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationPermission('denied');
-        } else {
-          setLocationPermission('unavailable');
-        }
-      },
+      handleGeolocationError,
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000, // 15초로 증가
         maximumAge: 300000, // 5분 캐시
       }
     );
-  }, []);
+  }, [handleGeolocationError]);
 
   // 내 위치 날씨 가져오기
   useEffect(() => {
@@ -175,23 +226,31 @@ export default function WeatherPage() {
   // 위치 재요청
   const handleRetryLocation = useCallback(() => {
     setLocationPermission('pending');
+    setLocationError('');
+
+    if (!navigator.geolocation) {
+      setLocationPermission('unavailable');
+      setLocationError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocationPermission('granted');
+        setLocationError('');
         setCoords({
           lat: position.coords.latitude,
           lon: position.coords.longitude,
         });
       },
-      () => {
-        setLocationPermission('denied');
-      },
+      handleGeolocationError,
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
+        maximumAge: 0, // 재시도 시에는 캐시 사용 안함
       }
     );
-  }, []);
+  }, [handleGeolocationError]);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
@@ -220,7 +279,7 @@ export default function WeatherPage() {
       </header>
 
       {/* 메인 컨텐츠 */}
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8">
         {/* 타이틀 */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-800">오늘의 날씨</h1>
@@ -228,43 +287,16 @@ export default function WeatherPage() {
         </div>
 
         {/* 내 위치 섹션 */}
-        <section className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold text-gray-700">📍 내 위치</h2>
+        <section className="mb-6 sm:mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-gray-700 sm:mb-4 sm:text-xl">📍 내 위치</h2>
 
-          {/* 위치 권한 대기 중 */}
-          {locationPermission === 'pending' && (
-            <div className="rounded-xl bg-white/50 p-6 text-center backdrop-blur-sm">
-              <div className="animate-pulse">
-                <p className="text-gray-600">위치 정보를 확인하고 있습니다...</p>
-              </div>
-            </div>
-          )}
-
-          {/* 위치 권한 거부됨 */}
-          {locationPermission === 'denied' && (
-            <div className="rounded-xl bg-yellow-50 p-6 text-center">
-              <p className="mb-4 text-gray-700">
-                📍 위치 권한이 거부되어 내 위치 날씨를 표시할 수 없습니다.
-              </p>
-              <LocationButton onClick={handleRetryLocation} loading={false} />
-            </div>
-          )}
-
-          {/* 위치 서비스 불가 */}
-          {locationPermission === 'unavailable' && (
-            <div className="rounded-xl bg-gray-100 p-6 text-center">
-              <p className="text-gray-600">
-                이 브라우저에서는 위치 서비스를 사용할 수 없습니다.
-              </p>
-            </div>
-          )}
-
-          {/* 내 위치 날씨 표시 */}
-          {locationPermission === 'granted' && (
+          {/* 내 위치 날씨 표시 - 권한 허락 시 실제 위치, 아니면 서울 */}
+          {locationPermission === 'granted' ? (
+            // 위치 권한 허락됨 - 실제 내 위치 날씨
             <>
               {myWeatherLoading && <WeatherCardSkeleton />}
               {myWeatherError && (
-                <div className="rounded-xl bg-red-50 p-4 text-red-700">
+                <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700 sm:p-4">
                   {myWeatherError}
                 </div>
               )}
@@ -273,13 +305,72 @@ export default function WeatherPage() {
                   <WeatherCard weather={myWeather} isMyLocation />
                   {/* 시간별 예보 */}
                   {hourlyLoading ? (
-                    <div className="mt-4 animate-pulse rounded-xl bg-white/30 p-4">
-                      <p className="text-center text-gray-500">시간별 예보 로딩 중...</p>
+                    <div className="mt-3 animate-pulse rounded-xl bg-white/30 p-3 sm:mt-4 sm:p-4">
+                      <p className="text-center text-sm text-gray-500">시간별 예보 로딩 중...</p>
                     </div>
                   ) : hourlyForecasts.length > 0 ? (
-                    <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-500/80 to-purple-600/80 p-4">
-                      <h3 className="mb-2 text-sm font-medium text-white/80">⏰ 시간별 예보 (24시간)</h3>
+                    <div className="mt-3 rounded-xl bg-gradient-to-br from-blue-500/80 to-purple-600/80 p-3 sm:mt-4 sm:p-4">
+                      <h3 className="mb-2 text-xs font-medium text-white/80 sm:text-sm">⏰ 시간별 예보 (24시간)</h3>
                       <HourlyForecastList forecasts={hourlyForecasts} />
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </>
+          ) : (
+            // 위치 권한 대기/거부/불가 - 서울 날씨 표시
+            <>
+              {/* 위치 권한 상태 안내 */}
+              {locationPermission === 'pending' && (
+                <div className="mb-3 rounded-lg bg-blue-50/80 px-3 py-2 text-center text-xs text-blue-600 sm:mb-4 sm:px-4 sm:text-sm">
+                  📍 위치 권한을 확인 중입니다... (기본 서울 날씨 표시)
+                </div>
+              )}
+              {locationPermission === 'denied' && (
+                <div className="mb-3 flex flex-col items-center gap-2 rounded-lg bg-yellow-50/80 px-3 py-2 sm:mb-4 sm:flex-row sm:justify-between sm:px-4">
+                  <p className="text-center text-xs text-gray-700 sm:text-left sm:text-sm">
+                    ⚠️ {locationError}
+                  </p>
+                  <div className="flex-shrink-0">
+                    <LocationButton onClick={handleRetryLocation} loading={false} />
+                  </div>
+                </div>
+              )}
+              {locationPermission === 'unavailable' && (
+                <div className="mb-3 flex flex-col items-center gap-2 rounded-lg bg-gray-100/80 px-3 py-2 sm:mb-4 sm:flex-row sm:justify-between sm:px-4">
+                  <p className="text-center text-xs text-gray-600 sm:text-left sm:text-sm">
+                    📍 {locationError || '위치 서비스를 사용할 수 없어 서울 날씨를 표시합니다.'}
+                  </p>
+                  <div className="flex-shrink-0">
+                    <LocationButton onClick={handleRetryLocation} loading={false} />
+                  </div>
+                </div>
+              )}
+              {locationPermission === 'timeout' && (
+                <div className="mb-3 flex flex-col items-center gap-2 rounded-lg bg-orange-50/80 px-3 py-2 sm:mb-4 sm:flex-row sm:justify-between sm:px-4">
+                  <p className="text-center text-xs text-orange-700 sm:text-left sm:text-sm">
+                    ⏱️ {locationError}
+                  </p>
+                  <div className="flex-shrink-0">
+                    <LocationButton onClick={handleRetryLocation} loading={false} />
+                  </div>
+                </div>
+              )}
+
+              {/* 서울 날씨 표시 (cityWeather 재사용) */}
+              {cityLoading && <WeatherCardSkeleton />}
+              {cityWeather && (
+                <div>
+                  <WeatherCard weather={cityWeather} />
+                  {/* 서울 시간별 예보 */}
+                  {cityHourlyLoading ? (
+                    <div className="mt-3 animate-pulse rounded-xl bg-white/30 p-3 sm:mt-4 sm:p-4">
+                      <p className="text-center text-sm text-gray-500">시간별 예보 로딩 중...</p>
+                    </div>
+                  ) : cityHourlyForecasts.length > 0 ? (
+                    <div className="mt-3 rounded-xl bg-gradient-to-br from-blue-500/80 to-purple-600/80 p-3 sm:mt-4 sm:p-4">
+                      <h3 className="mb-2 text-xs font-medium text-white/80 sm:text-sm">⏰ 서울 시간별 예보 (24시간)</h3>
+                      <HourlyForecastList forecasts={cityHourlyForecasts} />
                     </div>
                   ) : null}
                 </div>
@@ -289,25 +380,25 @@ export default function WeatherPage() {
         </section>
 
         {/* 도시 선택 섹션 */}
-        <section className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold text-gray-700">🏙️ 도시별 날씨</h2>
+        <section className="mb-6 sm:mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-gray-700 sm:mb-4 sm:text-xl">🏙️ 도시별 날씨</h2>
           <CitySelector selectedCity={selectedCity} onCitySelect={handleCitySelect} />
 
           {/* 선택된 도시 날씨 */}
           {selectedCity && (
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               {cityLoading && <WeatherCardSkeleton />}
               {cityWeather && (
                 <div>
                   <WeatherCard weather={cityWeather} />
                   {/* 도시별 시간별 예보 */}
                   {cityHourlyLoading ? (
-                    <div className="mt-4 animate-pulse rounded-xl bg-white/30 p-4">
-                      <p className="text-center text-gray-500">시간별 예보 로딩 중...</p>
+                    <div className="mt-3 animate-pulse rounded-xl bg-white/30 p-3 sm:mt-4 sm:p-4">
+                      <p className="text-center text-sm text-gray-500">시간별 예보 로딩 중...</p>
                     </div>
                   ) : cityHourlyForecasts.length > 0 ? (
-                    <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-500/80 to-purple-600/80 p-4">
-                      <h3 className="mb-2 text-sm font-medium text-white/80">⏰ {selectedCity} 시간별 예보 (24시간)</h3>
+                    <div className="mt-3 rounded-xl bg-gradient-to-br from-blue-500/80 to-purple-600/80 p-3 sm:mt-4 sm:p-4">
+                      <h3 className="mb-2 text-xs font-medium text-white/80 sm:text-sm">⏰ {selectedCity} 시간별 예보 (24시간)</h3>
                       <HourlyForecastList forecasts={cityHourlyForecasts} />
                     </div>
                   ) : null}
@@ -318,8 +409,8 @@ export default function WeatherPage() {
         </section>
 
         {/* 안내 문구 */}
-        <div className="mt-12 rounded-xl bg-white/50 p-6 text-center backdrop-blur-sm">
-          <p className="text-sm text-gray-600">
+        <div className="mt-8 rounded-xl bg-white/50 p-4 text-center backdrop-blur-sm sm:mt-12 sm:p-6">
+          <p className="text-xs text-gray-600 sm:text-sm">
             💡 도시 버튼을 클릭하면 해당 지역의 날씨를 확인할 수 있습니다.
             <br />
             서울 지역은 25개 구별 상세 날씨를 제공합니다.

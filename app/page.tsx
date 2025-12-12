@@ -7,16 +7,17 @@ import dynamic from 'next/dynamic';
 // Dynamically import 3D scene to avoid SSR issues
 const Scene = dynamic(() => import('@/components/3d/Scene'), {
   ssr: false,
-  loading: () => null, // 로딩 컴포넌트 제거 - UI 오버레이가 항상 보이도록
+  loading: () => (
+    <div className="absolute inset-0 bg-black" />
+  ),
 });
 
 // 서비스 경로 - prefetch 대상
-const SERVICE_ROUTES = ['/worldcup', '/weather'];
+const SERVICE_ROUTES = ['/worldcup', '/weather', '/test'];
 
 export default function HomePage() {
   const router = useRouter();
   const [showHint, setShowHint] = useState(true);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // 페이지 로드 시 서비스 페이지 prefetch
   useEffect(() => {
@@ -26,13 +27,12 @@ export default function HomePage() {
   }, [router]);
 
   const handleServiceClick = useCallback((href: string) => {
+    console.log('🎯 Service clicked:', href);
     if (href === '#') return;
-    setIsTransitioning(true);
-    // 지연 시간 300ms로 단축 (체감 성능 개선)
-    setTimeout(() => {
-      router.push(href);
-    }, 300);
-  }, [router]);
+    // window.location으로 직접 이동
+    console.log('🚀 Navigating to:', href);
+    window.location.href = href;
+  }, []);
 
   useEffect(() => {
     // Hide hint after 5 seconds
@@ -41,7 +41,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0a0a2a]">
+    <div className="relative h-screen w-full overflow-hidden bg-black">
       {/* 3D Scene */}
       <Scene onServiceClick={handleServiceClick} />
 
@@ -79,16 +79,6 @@ export default function HomePage() {
           </p>
         </footer>
       </div>
-
-      {/* Transition overlay */}
-      {isTransitioning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-            <p className="animate-pulse text-purple-300">이동 중...</p>
-          </div>
-        </div>
-      )}
 
       {/* Custom styles - 애니메이션은 페이지 로드 시 1회만 실행 */}
       <style jsx global>{`

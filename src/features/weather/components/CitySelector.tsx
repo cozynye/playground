@@ -19,12 +19,12 @@ interface CitySelectorProps {
 
 export function CitySelector({ selectedCity, onCitySelect }: CitySelectorProps) {
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-2">
       {CITIES.map((city) => (
         <button
           key={city.name}
           onClick={() => onCitySelect(city.name)}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+          className={`rounded-full px-3 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm ${
             selectedCity === city.name
               ? 'bg-blue-600 text-white shadow-lg'
               : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
